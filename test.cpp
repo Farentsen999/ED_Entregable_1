@@ -24,6 +24,10 @@ int main() {
   im.move_down(400);
   sleep(2);
   im.draw("imagen_desplazada_d.png");
+  sleep(2);
+  im.rotate();
+  sleep(2);
+  im.draw("imagen_rotada_90.png");
 
 
 
