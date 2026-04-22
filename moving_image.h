@@ -2,15 +2,42 @@
 #define MOVING_IMG_H
 
 #include "basics.h"
-
+#include <stack>
+#include <iostream>
+#include <vector>
 // Clase que representa una imagen como una colección de 3 matrices siguiendo el
 // esquema de colores RGB
 
 class moving_image {
 private:
+  // Struct que guarda el estado de las tres matrices para almacenar cada transformación.
+  struct EstadoImagen{
+    //usamos vectores para guardar las matrices, así el manejo de la memoria dinámica 
+    //al usar operaciones con el stack se le delega a vector.
+    std::vector<std::vector<unsigned char>> capa_roja, capa_verde, capa_azul;
+
+    EstadoImagen(unsigned char **r, unsigned char **g, unsigned char **b){
+      //indicamos que tenemos un vector de tañamo H_IMG  de vectores de tamaño  W_IMG para cada capa
+      capa_roja=  std::vector<std::vector<unsigned char>>(H_IMG, std::vector<unsigned char>(W_IMG));
+      capa_verde=  std::vector<std::vector<unsigned char>>(H_IMG, std::vector<unsigned char>(W_IMG));
+      capa_azul=  std::vector<std::vector<unsigned char>>(H_IMG, std::vector<unsigned char>(W_IMG));
+     
+      //Llenamos con los pixeles dados en el constructor
+      for(int i=0; i < H_IMG; i++)
+      for(int j=0; j < W_IMG; j++) {
+	      capa_roja[i][j] = r[i][j];
+        capa_verde[i][j] = g[i][j];
+       	capa_azul[i][j] = b[i][j];
+      }
+
+    }
+    
+  };
+  std::stack<EstadoImagen> stackEstadoImagen;
   unsigned char **red_layer; // Capa de tonalidades rojas
   unsigned char **green_layer; // Capa de tonalidades verdes
   unsigned char **blue_layer; // Capa de tonalidades azules
+
 
 public:
   // Constructor de la imagen. Se crea una imagen por defecto
@@ -66,9 +93,15 @@ public:
   void draw(const char* nb) {
     _draw(nb);
   }
+  void guardarEstadoImagen(){
+    EstadoImagen estadoAnterior= EstadoImagen(red_layer,green_layer,blue_layer);
+    stackEstadoImagen.push(estadoAnterior);
+  }
 
   // Función que similar desplazar la imagen, de manera circular, d pixeles a la izquierda
   void move_left(int d) {
+    //guardamos el estado actual de la imagen en el stack
+     guardarEstadoImagen();
     unsigned char **tmp_layer = new unsigned char*[H_IMG];
     for(int i=0; i < H_IMG; i++) 
       tmp_layer[i] = new unsigned char[W_IMG];
@@ -120,6 +153,8 @@ public:
   }
 
   void move_right(int d) {
+    //guardamos el estado actual de la imagen en el stack
+     guardarEstadoImagen();
     unsigned char **tmp_layer = new unsigned char*[H_IMG];
     for(int i=0; i < H_IMG; i++) 
       tmp_layer[i] = new unsigned char[W_IMG];
@@ -170,6 +205,8 @@ public:
   }
 
   void move_up(int d) {
+    //guardamos el estado actual de la imagen en el stack
+     guardarEstadoImagen();
     unsigned char **tmp_layer = new unsigned char*[H_IMG];
     for(int i=0; i < H_IMG; i++) 
       tmp_layer[i] = new unsigned char[W_IMG];
@@ -221,6 +258,8 @@ public:
   }
 
   void move_down(int d) {
+    //guardamos el estado actual de la imagen en el stack
+     guardarEstadoImagen();
     unsigned char **tmp_layer = new unsigned char*[H_IMG];
     for(int i=0; i < H_IMG; i++) 
       tmp_layer[i] = new unsigned char[W_IMG];
@@ -272,6 +311,8 @@ public:
   }
 
   void rotate() {
+    //guardamos el estado actual de la imagen en el stack
+     guardarEstadoImagen();
     unsigned char **tmp_layer = new unsigned char*[H_IMG];
     for(int i=0; i < H_IMG; i++) 
       tmp_layer[i] = new unsigned char[W_IMG];
@@ -308,9 +349,28 @@ public:
       delete[] tmp_layer[i];
     delete[] tmp_layer;
   }
+ //Metodo que devuelve el estado de la imagen anterior al ultimo movimiento.
+  void undo(){
+     if(stackEstadoImagen.empty()){
+      std::cout << "No hay movimientos anteriores" << std::endl;
+      return;
+     }
+     //Miramos el estado anterior y lo sacamos
+     EstadoImagen estadoAnterior= stackEstadoImagen.top();
+     stackEstadoImagen.pop();
+     //Reemplazamos las matrices actuales por las del ultimo estado
+     for(int i=0; i < H_IMG; i++)
+      for(int j=0; j < W_IMG; j++) {
+	      red_layer[i][j] = estadoAnterior.capa_roja[i][j];
+        green_layer[i][j] = estadoAnterior.capa_verde[i][j];
+       	blue_layer[i][j] = estadoAnterior.capa_azul[i][j];
+      }
+     
+  }
 
 
 private:
+
   // Función privada que guarda la imagen en formato .png
   void _draw(const char* nb) {
     //    unsigned char rgb[H_IMG * W_IMG * 3], *p = rgb;
