@@ -33,7 +33,8 @@ private:
     }
     
   };
-  std::stack<EstadoImagen> stackEstadoImagen;
+  std::stack<EstadoImagen> stackEstadoImagen1; //para undo()
+  std::stack<EstadoImagen> stackEstadoImagen2; //para redo()
   unsigned char **red_layer; // Capa de tonalidades rojas
   unsigned char **green_layer; // Capa de tonalidades verdes
   unsigned char **blue_layer; // Capa de tonalidades azules
@@ -95,7 +96,7 @@ public:
   }
   void guardarEstadoImagen(){
     EstadoImagen estadoAnterior= EstadoImagen(red_layer,green_layer,blue_layer);
-    stackEstadoImagen.push(estadoAnterior);
+    stackEstadoImagen1.push(estadoAnterior);
   }
 
   // Función que similar desplazar la imagen, de manera circular, d pixeles a la izquierda
@@ -351,13 +352,17 @@ public:
   }
  //Metodo que devuelve el estado de la imagen anterior al ultimo movimiento.
   void undo(){
-     if(stackEstadoImagen.empty()){
+     if(stackEstadoImagen1.empty()){
       std::cout << "No hay movimientos anteriores" << std::endl;
       return;
      }
-     //Miramos el estado anterior y lo sacamos
-     EstadoImagen estadoAnterior= stackEstadoImagen.top();
-     stackEstadoImagen.pop();
+     //Guardamos el estado actual en nuestro segundo stack, para luego ser usado en redo()
+     EstadoImagen estadoActual= EstadoImagen(red_layer,green_layer,blue_layer);
+     stackEstadoImagen2.push(estadoActual);
+
+     //Miramos el estado anterior y lo sacamos del primer stack.
+     EstadoImagen estadoAnterior= stackEstadoImagen1.top();
+     stackEstadoImagen1.pop();
      //Reemplazamos las matrices actuales por las del ultimo estado
      for(int i=0; i < H_IMG; i++)
       for(int j=0; j < W_IMG; j++) {
@@ -366,6 +371,23 @@ public:
        	blue_layer[i][j] = estadoAnterior.capa_azul[i][j];
       }
      
+  }
+  void redo(){
+
+     if(stackEstadoImagen2.empty()){
+      std::cout << "No hay movimientos posteriores" << std::endl;
+      return;
+     }
+     //Miramos el estado anterior y lo sacamos
+     EstadoImagen estadoAnterior= stackEstadoImagen2.top();
+     stackEstadoImagen2.pop();
+     //Reemplazamos las matrices actuales por las del ultimo estado
+     for(int i=0; i < H_IMG; i++)
+      for(int j=0; j < W_IMG; j++) {
+	      red_layer[i][j] = estadoAnterior.capa_roja[i][j];
+        green_layer[i][j] = estadoAnterior.capa_verde[i][j];
+       	blue_layer[i][j] = estadoAnterior.capa_azul[i][j];
+      }    
   }
 
 
