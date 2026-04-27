@@ -29,15 +29,17 @@ private:
         capa_verde[i][j] = g[i][j];
        	capa_azul[i][j] = b[i][j];
       }
-
     }
-    
   };
   std::stack<EstadoImagen> stackEstadoImagen1; //para undo()
   std::stack<EstadoImagen> stackEstadoImagen2; //para redo()
   unsigned char **red_layer; // Capa de tonalidades rojas
   unsigned char **green_layer; // Capa de tonalidades verdes
   unsigned char **blue_layer; // Capa de tonalidades azules
+  // Enum para clasificar el tipo de movimiento
+  enum TipoMovimiento {NINGUNO, IZQUIERDA, DERECHA, ARRIBA, ABAJO, ROTAR};
+  TipoMovimiento ultimoTipo = NINGUNO;
+  int ultimaDistancia = 0;
 
 
 public:
@@ -151,6 +153,8 @@ public:
         delete[] tmp_layer[i]; // Borra cada fila
     }
     delete[] tmp_layer;
+    ultimoTipo = IZQUIERDA; 
+    ultimaDistancia = d; 
   }
 
   void move_right(int d) {
@@ -203,6 +207,8 @@ public:
         delete[] tmp_layer[i]; // Borra cada fila
     }
     delete[] tmp_layer;
+    ultimoTipo = DERECHA; 
+    ultimaDistancia = d; 
   }
 
   void move_up(int d) {
@@ -256,6 +262,8 @@ public:
         delete[] tmp_layer[i]; // Borra cada fila
     }
     delete[] tmp_layer;
+    ultimoTipo = ARRIBA; 
+    ultimaDistancia = d; 
   }
 
   void move_down(int d) {
@@ -309,6 +317,8 @@ public:
         delete[] tmp_layer[i]; // Borra cada fila
     }
     delete[] tmp_layer;
+    ultimoTipo = ABAJO; 
+    ultimaDistancia = d; 
   }
 
   void rotate() {
@@ -349,6 +359,7 @@ public:
     for(int i=0; i < H_IMG; i++)
       delete[] tmp_layer[i];
     delete[] tmp_layer;
+    ultimoTipo = ROTAR;
   }
  //Metodo que devuelve el estado de la imagen anterior al ultimo movimiento.
   void undo(){
@@ -390,6 +401,32 @@ public:
       }    
   }
 
+ void repeat() {
+    // En caso de que no se haya realizado ninguna accion
+    if (ultimoTipo == NINGUNO) {
+        return;
+    }
+    // Se repite el ultimo movimiento
+    switch (ultimoTipo) {
+      case IZQUIERDA:
+        move_left(ultimaDistancia);
+        break;
+      case DERECHA:
+        move_right(ultimaDistancia);
+        break;
+      case ARRIBA:
+        move_up(ultimaDistancia);
+        break;
+      case ABAJO:
+        move_down(ultimaDistancia);
+        break;
+      case ROTAR:
+        rotate();
+        break;
+      default:
+        break;
+    }
+  }
 
 private:
 

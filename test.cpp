@@ -13,11 +13,13 @@ int main() {
 
   im.draw("imagen.png");
   im.move_right(200);
+  im.move_down(200);
   im.rotate();
   im.undo();
   im.undo();
   im.redo();
   im.redo();
+  im.repeat();
   sleep(2);
   im.draw("imagen_r.png");
 
